@@ -35,7 +35,7 @@ wind.createDSP(audioContext, 1024)
     });
 
 // Parameter addresses (check the "params:" line in the console)
-const WIND_FORCE = "/wind/force";
+const WIND_FORCE = "/wind/wind/force";
 const WIND_VOLUME = "/wind/volume";
 
 //==========================================================================================
