@@ -1,17 +1,13 @@
+// INTERACTION 2 — The phone is spun while lying on a flat surface -> ENGINE
+// Scenario: a spinning top / crank. Spinning the phone 'drives' a motor: faster spin = higher revs.
 //==========================================================================================
 // AUDIO SETUP
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit just where you're asked to!
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 let dspNode = null;
 let dspNodeParams = null;
 let jsonParams = null;
 
-// Change here to ("tuono") depending on your wasm file name
+// Name of the WASM file (without .wasm)
 const dspName = "engine";
 const instance = new FaustWasm2ScriptProcessor(dspName);
 
@@ -24,7 +20,6 @@ if (typeof module === "undefined") {
     module.exports = exp;
 }
 
-// The name should be the same as the WASM file, so change tuono with brass if you use brass.wasm
 engine.createDSP(audioContext, 1024)
     .then(node => {
         dspNode = node;
@@ -32,35 +27,70 @@ engine.createDSP(audioContext, 1024)
         console.log('params: ', dspNode.getParams());
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
-        dspNodeParams = jsonParams
-        // const exampleMinMaxParam = findByAddress(dspNodeParams, "/thunder/rumble");
-        // // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
-        // const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
-        // console.log('Min value:', exampleMinValue, 'Max value:', exampleMaxValue);
+        dspNodeParams = jsonParams;
+        // short ramp so the motor reacts quickly to starting/stopping the spin
+        dspNode.setParamValue("/engine/runtime", 1.0);
+        dspNode.setParamValue("/engine/volume", 0.8);
+        dspNode.setParamValue("/engine/gate", 0);
     });
-
 
 //==========================================================================================
 // INTERACTIONS
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit the next functions to create interactions
-// Decide which parameters you're using and then use playAudio to play the Audio
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 
+// Tuning
+const START_SPEED = 60;   // deg/s: spin faster than this to start the motor
+const STOP_SPEED = 30;    // deg/s: motor stops below this (hysteresis avoids flickering)
+const FULL_SPEED = 720;   // deg/s (2 turns per second) = maximum revs
+const FLAT_LIMIT = 25;    // degrees: phone must lie (almost) flat to count as "spun on a surface"
+const SMOOTHING = 0.15;
+
+// Orientation read directly from the browser, always in degrees.
+// alpha = rotation around the vertical axis (0..360), beta/gamma = tilt.
+let rawSpeed = 0;       // instantaneous spin speed in deg/s
+let lastAlpha = null;
+let lastTime = 0;
+let isFlat = true;
+let hasOrientation = false;
+
+window.addEventListener("deviceorientation", (e) => {
+    if (e.alpha === null) return;
+    hasOrientation = true;
+    const now = performance.now();
+    if (lastAlpha !== null) {
+        // Unwrap the 360 -> 0 jump, otherwise one frame would look like a huge spin
+        let d = e.alpha - lastAlpha;
+        if (d > 180) d -= 360;
+        if (d < -180) d += 360;
+        const dt = (now - lastTime) / 1000;
+        if (dt > 0) rawSpeed = Math.abs(d) / dt;
+    }
+    lastAlpha = e.alpha;
+    lastTime = now;
+    isFlat = Math.abs(e.beta) < FLAT_LIMIT && Math.abs(e.gamma) < FLAT_LIMIT;
+});
+
+let spinSpeed = 0;      // smoothed speed
+let engineOn = false;
+
 function accelerationChange(accx, accy, accz) {
-    // playAudio()
 }
 
 function rotationChange(rotx, roty, rotz) {
+    // Desktop debug: hold the mouse button, mouse X = spin speed
+    if (!hasOrientation) {
+        rawSpeed = mouseIsPressed ? map(mouseX, 0, width, 0, FULL_SPEED) : 0;
+    }
+    const speed = isFlat ? rawSpeed : 0;
+    spinSpeed = lerp(spinSpeed, speed, SMOOTHING);
+
+    if (!engineOn && spinSpeed > START_SPEED) engineOn = true;
+    if (engineOn && spinSpeed < STOP_SPEED) engineOn = false;
+
+    playAudio(engineOn, spinSpeed);
 }
 
 function mousePressed() {
-    // playAudio()
-    // Use this for debugging from the desktop!
 }
 
 function deviceMoved() {
@@ -71,39 +101,27 @@ function deviceMoved() {
 function deviceTurned() {
     threshVals[1] = turnAxis;
 }
+
 function deviceShaken() {
     shaketimer = millis();
     statusLabels[0].style("color", "pink");
-    playAudio();
-}
-
-function getMinMaxParam(address) {
-    const exampleMinMaxParam = findByAddress(dspNodeParams, address);
-    // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
-    const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
-    console.log('Min value:', exampleMinValue, 'Max value:', exampleMaxValue);
-    return [exampleMinValue, exampleMaxValue]
 }
 
 //==========================================================================================
 // AUDIO INTERACTION
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit here to define your audio controls 
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 
-function playAudio() {
+function playAudio(on, speed) {
     if (!dspNode) {
         return;
     }
     if (audioContext.state === 'suspended') {
         return;
     }
-    dspNode.setParamValue("/englishBell/gate", 1)
-    setTimeout(() => { dspNode.setParamValue("/englishBell/gate", 0) }, 100);
+    // gate: 0/1 (checkbox), maxSpeed: 0..1
+    dspNode.setParamValue("/engine/gate", on ? 1 : 0);
+    const revs = constrain(map(speed, STOP_SPEED, FULL_SPEED, 0.1, 1), 0.1, 1);
+    dspNode.setParamValue("/engine/maxSpeed", revs);
 }
 
 //==========================================================================================

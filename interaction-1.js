@@ -1,17 +1,13 @@
+// INTERACTION 1 — The phone is placed flat in the hand and tilted from side to side -> RAIN
+// Scenario: a digital rain stick. Tilting it lets the 'seeds' fall: more tilt = heavier rain.
 //==========================================================================================
 // AUDIO SETUP
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit just where you're asked to!
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 let dspNode = null;
 let dspNodeParams = null;
 let jsonParams = null;
 
-// Change here to ("tuono") depending on your wasm file name
+// Name of the WASM file (without .wasm)
 const dspName = "rain";
 const instance = new FaustWasm2ScriptProcessor(dspName);
 
@@ -24,7 +20,6 @@ if (typeof module === "undefined") {
     module.exports = exp;
 }
 
-// The name should be the same as the WASM file, so change tuono with brass if you use brass.wasm
 rain.createDSP(audioContext, 1024)
     .then(node => {
         dspNode = node;
@@ -32,35 +27,47 @@ rain.createDSP(audioContext, 1024)
         console.log('params: ', dspNode.getParams());
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
-        dspNodeParams = jsonParams
-        // const exampleMinMaxParam = findByAddress(dspNodeParams, "/thunder/rumble");
-        // // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
-        // const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
-        // console.log('Min value:', exampleMinValue, 'Max value:', exampleMaxValue);
+        dspNodeParams = jsonParams;
+        // start silent: rain only appears when the phone is tilted
+        dspNode.setParamValue("/rain/density", 0);
     });
-
 
 //==========================================================================================
 // INTERACTIONS
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit the next functions to create interactions
-// Decide which parameters you're using and then use playAudio to play the Audio
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 
+// Tuning
+const DEAD_ZONE = 5;    // degrees: below this the phone counts as flat -> no rain
+const MAX_TILT = 60;    // degrees: at this tilt the rain is at its heaviest
+const SMOOTHING = 0.1;  // 0..1, lower = smoother/slower response
+
+// Side-to-side tilt read directly from the browser, always in degrees (-90..90).
+let tiltDeg = 0;
+let hasOrientation = false;
+window.addEventListener("deviceorientation", (e) => {
+    if (e.gamma !== null) {
+        tiltDeg = e.gamma;
+        hasOrientation = true;
+    }
+});
+
+let rainLevel = 0; // smoothed intensity 0..1
+
 function accelerationChange(accx, accy, accz) {
-    // playAudio()
 }
 
 function rotationChange(rotx, roty, rotz) {
+    // Desktop debug: without sensors, the mouse X position simulates the tilt
+    if (!hasOrientation) {
+        tiltDeg = map(mouseX, 0, width, -90, 90);
+    }
+    // Tilt to either side counts the same: use the absolute angle
+    const target = constrain(map(Math.abs(tiltDeg), DEAD_ZONE, MAX_TILT, 0, 1), 0, 1);
+    rainLevel = lerp(rainLevel, target, SMOOTHING);
+    playAudio(rainLevel);
 }
 
 function mousePressed() {
-    playAudio()
-    // Use this for debugging from the desktop!
 }
 
 function deviceMoved() {
@@ -71,43 +78,26 @@ function deviceMoved() {
 function deviceTurned() {
     threshVals[1] = turnAxis;
 }
+
 function deviceShaken() {
     shaketimer = millis();
     statusLabels[0].style("color", "pink");
-    playAudio();
-}
-
-function getMinMaxParam(address) {
-    const exampleMinMaxParam = findByAddress(dspNodeParams, address);
-    // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
-    const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
-    console.log('Min value:', exampleMinValue, 'Max value:', exampleMaxValue);
-    return [exampleMinValue, exampleMaxValue]
 }
 
 //==========================================================================================
 // AUDIO INTERACTION
-//------------------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------------------
-// Edit here to define your audio controls 
-//------------------------------------------------------------------------------------------
-//
 //==========================================================================================
 
-function playAudio() {
+function playAudio(level) {
     if (!dspNode) {
         return;
     }
     if (audioContext.state === 'suspended') {
         return;
     }
-    // Edit here the addresses ("/thunder/rumble") depending on your WASM controls (you can see 
-    // them printed on the console of your browser when you load the page)
-    // For example if you change to a bell sound, here you could use "/churchBell/gate" instead of
-    // "/thunder/rumble".
-    dspNode.setParamValue("/thunder/rumble", 1)
-    setTimeout(() => { dspNode.setParamValue("/thunder/rumble", 0) }, 100);
+    // density: 0..1000 (min/max from the DSP), volume: 0..1
+    dspNode.setParamValue("/rain/density", level * 800);
+    dspNode.setParamValue("/rain/volume", 0.3 + 0.5 * level);
 }
 
 //==========================================================================================

@@ -7,7 +7,7 @@
       http-equiv="Cache-Control"
       content="no-cache, max-age=0, must-revalidate"
     />
-    <title>p5.js faust example</title>
+    <title>Hand Bell &middot; Shake to ring</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
     <script src="dsp.js"></script>
@@ -15,23 +15,29 @@
 
   <body class="grid-container fullbody">
     <nav class="primary-nav">
-      <li><a href="index.html">Interaction 1</a></li>
-      <li><a href="sound2.html">Interaction 2</a></li>
-      <li><a href="sound3.html">Interaction 3</a></li>
+      <li><a href="index.html">Rain &middot; Tilt</a></li>
+      <li><a href="sound2.html">Engine &middot; Spin</a></li>
+      <li><a href="sound3.html">Bell &middot; Shake</a></li>
     </nav>
 
     <div id="info">
       <p>
-        <b>Insert a description of your sonic interaction design here! </b>
+        <b>Interaction 3 &mdash; Shake &rarr; Bell</b>
         <br />
         <br />
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aut adipisci,
-        non quasi vel vero odit debitis recusandae impedit laborum id tempora!
-        Enim accusantium a voluptatum nisi ea placeat? Accusamus, perferendis?
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequuntur
-        accusantium suscipit eaque similique odit deserunt iure est unde libero
-        pariatur doloribus voluptatibus voluptatum cupiditate error, dolorem
-        eius eos. Provident, ullam.
+        <b>Action:</b> the phone is shaken.<br />
+        <b>Sound:</b> bell.<br />
+        <br />
+        <b>Scenario:</b> a hand bell, like a school or reception bell, which you ring
+        by shaking it.<br />
+        <b>Mapping:</b> each shake gesture is one strike, a discrete event, so it
+        triggers a single bell stroke (with a short cooldown, so one gesture does not
+        cause a burst of strokes). The strength of the shake controls the stroke:
+        a harder shake rings louder and brighter, like hitting a real bell harder.
+        Small movements do not ring the bell.<br />
+        <br />
+        <i>How to use:</i> press "Turn On DSP" and shake the phone. Adjust the
+        sensitivity with the "shake threshold" slider.
       </p>
     </div>
 

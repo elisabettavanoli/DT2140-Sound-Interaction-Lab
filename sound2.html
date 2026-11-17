@@ -7,7 +7,7 @@
       http-equiv="Cache-Control"
       content="no-cache, max-age=0, must-revalidate"
     />
-    <title>p5.js faust example</title>
+    <title>Spinning Motor &middot; Spin to rev the engine</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
     <script src="dsp.js"></script>
@@ -15,23 +15,28 @@
 
   <body class="grid-container fullbody">
     <nav class="primary-nav">
-      <li><a href="index.html">Interaction 1</a></li>
-      <li><a href="sound2.html">Interaction 2</a></li>
-      <li><a href="sound3.html">Interaction 3</a></li>
+      <li><a href="index.html">Rain &middot; Tilt</a></li>
+      <li><a href="sound2.html">Engine &middot; Spin</a></li>
+      <li><a href="sound3.html">Bell &middot; Shake</a></li>
     </nav>
 
     <div id="info">
       <p>
-        <b>Insert a description of your sonic interaction design here! </b>
+        <b>Interaction 2 &mdash; Spin &rarr; Engine</b>
         <br />
         <br />
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aut adipisci,
-        non quasi vel vero odit debitis recusandae impedit laborum id tempora!
-        Enim accusantium a voluptatum nisi ea placeat? Accusamus, perferendis?
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequuntur
-        accusantium suscipit eaque similique odit deserunt iure est unde libero
-        pariatur doloribus voluptatibus voluptatum cupiditate error, dolorem
-        eius eos. Provident, ullam.
+        <b>Action:</b> the phone is spun while lying on a flat surface.<br />
+        <b>Sound:</b> engine.<br />
+        <br />
+        <b>Scenario:</b> a spinning top or crank that drives a motor.<br />
+        <b>Mapping:</b> a motor is something that turns, so the phone's rotation speed
+        controls the engine's revs. The engine starts only when the phone lies flat
+        and spins fast enough. Spinning faster makes the revs higher, and when the phone
+        slows down the engine winds down and stops. The 360&deg;&rarr;0&deg; jump of
+        the compass angle is unwrapped, and separate start/stop thresholds keep the
+        engine from flickering on and off.<br />
+        <br />
+        <i>How to use:</i> press "Turn On DSP", lay the phone on a table and spin it.
       </p>
     </div>
 

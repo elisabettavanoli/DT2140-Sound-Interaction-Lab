@@ -7,7 +7,7 @@
       http-equiv="Cache-Control"
       content="no-cache, max-age=0, must-revalidate"
     />
-    <title>p5.js faust example</title>
+    <title>Rain Stick &middot; Tilt to make it rain</title>
     <link rel="stylesheet" href="styles.css" /> 
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
     <script src="dsp.js"></script>
@@ -15,17 +15,27 @@
 
   <body class="grid-container fullbody">
     <nav class="primary-nav">
-      <li><a href="index.html">Interaction 1</a></li>
-      <li><a href="sound2.html">Interaction 2</a></li>
-      <li><a href="sound3.html">Interaction 3</a></li>
+      <li><a href="index.html">Rain &middot; Tilt</a></li>
+      <li><a href="sound2.html">Engine &middot; Spin</a></li>
+      <li><a href="sound3.html">Bell &middot; Shake</a></li>
     </nav>
 
     <div id="info">
       <p>
-        <b>Insert a description of your sonic interaction design here! </b>
+        <b>Interaction 1 &mdash; Tilt &rarr; Rain</b>
         <br />
         <br />
-        Test 1
+        <b>Action:</b> the phone is placed flat in the hand and tilted from side to side.<br />
+        <b>Sound:</b> rain.<br />
+        <br />
+        <b>Scenario:</b> a digital rain stick. A real rain stick is played by tilting it:
+        the seeds inside slide down and sound like rain.<br />
+        <b>Mapping:</b> the tilt angle (to either side) controls the rain density and volume.
+        Flat = silence, slightly tilted = a light drizzle, about 60&deg; = heavy rain.
+        A continuous gesture controls a continuous sound, and more tilt means more
+        "falling seeds", so the response is easy to predict.<br />
+        <br />
+        <i>How to use:</i> press "Turn On DSP", hold the phone flat and tilt it left or right.
       </p>
     </div>
 
