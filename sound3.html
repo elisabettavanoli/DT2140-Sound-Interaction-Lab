@@ -7,7 +7,7 @@
       http-equiv="Cache-Control"
       content="no-cache, max-age=0, must-revalidate"
     />
-    <title>Hand Bell &middot; Shake to ring</title>
+    <title>Bell Peal &middot; Shake to ring</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
     <script src="dsp.js"></script>
@@ -22,22 +22,22 @@
 
     <div id="info">
       <p>
-        <b>Interaction 3 &mdash; Shake &rarr; Bell</b>
+        <b>Interaction 3 &mdash; Shake &rarr; Bells</b>
         <br />
         <br />
         <b>Action:</b> the phone is shaken.<br />
-        <b>Sound:</b> bell.<br />
+        <b>Sound:</b> bells.<br />
         <br />
-        <b>Scenario:</b> a hand bell, like a school or reception bell, which you ring
-        by shaking it.<br />
-        <b>Mapping:</b> each shake gesture is one strike, a discrete event, so it
-        triggers a single bell stroke (with a short cooldown, so one gesture does not
-        cause a burst of strokes). The strength of the shake controls the stroke:
-        a harder shake rings louder and brighter, like hitting a real bell harder.
-        Small movements do not ring the bell.<br />
+        <b>Scenario:</b> a festive bell peal, like a bell tower ringing on a holiday.<br />
+        <b>Mapping:</b> a single shake is one strike, so it rings one bell. Shaking
+        continuously rings more and more bells, faster and overlapping, so the energy
+        and duration of the gesture become the density of the sound. Each strike picks
+        one of four different bells (English, French, Russian, church), with its own
+        pitch and timbre. A harder shake rings louder and brighter, like hitting a real
+        bell harder. Small movements do not ring the bells.<br />
         <br />
-        <i>How to use:</i> press "Turn On DSP" and shake the phone. Adjust the
-        sensitivity with the "shake threshold" slider.
+        <i>How to use:</i> press "Turn On DSP" and shake the phone once, then keep
+        shaking. Adjust the sensitivity with the "shake threshold" slider.
       </p>
     </div>
 
