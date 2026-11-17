@@ -1,5 +1,7 @@
-// INTERACTION 2 — The phone is spun while lying on a flat surface -> ENGINE
-// Scenario: a spinning top / crank. Spinning the phone 'drives' a motor: faster spin = higher revs.
+// INTERACTION 2 — The phone is held and used to detect all very large movements, but not small ones -> WIND
+// Scenario: swinging a stick, a fan or a flag through the air. A big, fast sweep pushes air
+// and makes a "whoosh"; small movements don't move enough air to be heard.
+
 //==========================================================================================
 // AUDIO SETUP
 //==========================================================================================
@@ -8,7 +10,7 @@ let dspNodeParams = null;
 let jsonParams = null;
 
 // Name of the WASM file (without .wasm)
-const dspName = "engine";
+const dspName = "wind";
 const instance = new FaustWasm2ScriptProcessor(dspName);
 
 // output to window or npm package module
@@ -20,7 +22,7 @@ if (typeof module === "undefined") {
     module.exports = exp;
 }
 
-engine.createDSP(audioContext, 1024)
+wind.createDSP(audioContext, 1024)
     .then(node => {
         dspNode = node;
         dspNode.connect(audioContext.destination);
@@ -28,66 +30,63 @@ engine.createDSP(audioContext, 1024)
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
         dspNodeParams = jsonParams;
-        // short ramp so the motor reacts quickly to starting/stopping the spin
-        dspNode.setParamValue("/engine/runtime", 1.0);
-        dspNode.setParamValue("/engine/volume", 0.8);
-        dspNode.setParamValue("/engine/gate", 0);
+        // start silent: wind only appears with a large movement
+        dspNode.setParamValue(WIND_FORCE, 0);
     });
+
+// Parameter addresses (check the "params:" line in the console)
+const WIND_FORCE = "/wind/force";
+const WIND_VOLUME = "/wind/volume";
 
 //==========================================================================================
 // INTERACTIONS
 //==========================================================================================
 
 // Tuning
-const START_SPEED = 60;   // deg/s: spin faster than this to start the motor
-const STOP_SPEED = 30;    // deg/s: motor stops below this (hysteresis avoids flickering)
-const FULL_SPEED = 720;   // deg/s (2 turns per second) = maximum revs
-const FLAT_LIMIT = 25;    // degrees: phone must lie (almost) flat to count as "spun on a surface"
-const SMOOTHING = 0.15;
+const SMALL_LIMIT = 6;    // m/s²: movements below this are "small" and ignored
+const LARGE_FULL = 25;    // m/s²: a movement this strong gives the strongest gust
+const ATTACK = 0.4;       // 0..1: how fast the gust builds up (high = immediate)
+const RELEASE = 0.04;     // 0..1: how fast the wind dies down after the gesture (low = long tail)
 
-// Orientation read directly from the browser, always in degrees.
-// alpha = rotation around the vertical axis (0..360), beta/gamma = tilt.
-let rawSpeed = 0;       // instantaneous spin speed in deg/s
-let lastAlpha = null;
-let lastTime = 0;
-let isFlat = true;
-let hasOrientation = false;
+// Movement strength = acceleration WITHOUT gravity (m/s²), read directly from the browser.
+let moveMag = 0;
+let hasMotion = false;
+let gravity = null;   // fallback: estimated gravity, if the phone only gives acceleration incl. gravity
 
-window.addEventListener("deviceorientation", (e) => {
-    if (e.alpha === null) return;
-    hasOrientation = true;
-    const now = performance.now();
-    if (lastAlpha !== null) {
-        // Unwrap the 360 -> 0 jump, otherwise one frame would look like a huge spin
-        let d = e.alpha - lastAlpha;
-        if (d > 180) d -= 360;
-        if (d < -180) d += 360;
-        const dt = (now - lastTime) / 1000;
-        if (dt > 0) rawSpeed = Math.abs(d) / dt;
+window.addEventListener("devicemotion", (e) => {
+    const a = e.acceleration;
+    if (a && a.x !== null) {
+        hasMotion = true;
+        moveMag = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+        return;
     }
-    lastAlpha = e.alpha;
-    lastTime = now;
-    isFlat = Math.abs(e.beta) < FLAT_LIMIT && Math.abs(e.gamma) < FLAT_LIMIT;
+    // Fallback: remove gravity with a slow low-pass filter
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.x === null) return;
+    hasMotion = true;
+    if (gravity === null) gravity = { x: g.x, y: g.y, z: g.z };
+    gravity.x = 0.9 * gravity.x + 0.1 * g.x;
+    gravity.y = 0.9 * gravity.y + 0.1 * g.y;
+    gravity.z = 0.9 * gravity.z + 0.1 * g.z;
+    const x = g.x - gravity.x, y = g.y - gravity.y, z = g.z - gravity.z;
+    moveMag = Math.sqrt(x * x + y * y + z * z);
 });
 
-let spinSpeed = 0;      // smoothed speed
-let engineOn = false;
+let windLevel = 0;   // smoothed 0..1
 
 function accelerationChange(accx, accy, accz) {
+    // Desktop debug: mouse speed simulates the movement
+    if (!hasMotion) {
+        moveMag = dist(mouseX, mouseY, pmouseX, pmouseY);
+    }
+    // Small movements -> 0, large movements -> up to 1
+    const target = constrain(map(moveMag, SMALL_LIMIT, LARGE_FULL, 0, 1), 0, 1);
+    // Fast attack, slow release: a gust starts with the gesture and fades out after it
+    windLevel = lerp(windLevel, target, target > windLevel ? ATTACK : RELEASE);
+    playAudio(windLevel);
 }
 
 function rotationChange(rotx, roty, rotz) {
-    // Desktop debug: hold the mouse button, mouse X = spin speed
-    if (!hasOrientation) {
-        rawSpeed = mouseIsPressed ? map(mouseX, 0, width, 0, FULL_SPEED) : 0;
-    }
-    const speed = isFlat ? rawSpeed : 0;
-    spinSpeed = lerp(spinSpeed, speed, SMOOTHING);
-
-    if (!engineOn && spinSpeed > START_SPEED) engineOn = true;
-    if (engineOn && spinSpeed < STOP_SPEED) engineOn = false;
-
-    playAudio(engineOn, spinSpeed);
 }
 
 function mousePressed() {
@@ -111,17 +110,16 @@ function deviceShaken() {
 // AUDIO INTERACTION
 //==========================================================================================
 
-function playAudio(on, speed) {
+function playAudio(level) {
     if (!dspNode) {
         return;
     }
     if (audioContext.state === 'suspended') {
         return;
     }
-    // gate: 0/1 (checkbox), maxSpeed: 0..1
-    dspNode.setParamValue("/engine/gate", on ? 1 : 0);
-    const revs = constrain(map(speed, STOP_SPEED, FULL_SPEED, 0.1, 1), 0.1, 1);
-    dspNode.setParamValue("/engine/maxSpeed", revs);
+    // force: 0..1, volume: 0..1 — a stronger gesture is both a stronger and a louder gust
+    dspNode.setParamValue(WIND_FORCE, level);
+    dspNode.setParamValue(WIND_VOLUME, 0.3 + 0.7 * level);
 }
 
 //==========================================================================================

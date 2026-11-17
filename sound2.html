@@ -7,7 +7,7 @@
       http-equiv="Cache-Control"
       content="no-cache, max-age=0, must-revalidate"
     />
-    <title>Spinning Motor &middot; Spin to rev the engine</title>
+    <title>Air Swing &middot; Sweep to make wind</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.js"></script>
     <script src="dsp.js"></script>
@@ -16,27 +16,27 @@
   <body class="grid-container fullbody">
     <nav class="primary-nav">
       <li><a href="index.html">Rain &middot; Tilt</a></li>
-      <li><a href="sound2.html">Engine &middot; Spin</a></li>
+      <li><a href="sound2.html">Wind &middot; Swing</a></li>
       <li><a href="sound3.html">Bell &middot; Shake</a></li>
     </nav>
 
     <div id="info">
       <p>
-        <b>Interaction 2 &mdash; Spin &rarr; Engine</b>
+        <b>Interaction 2 &mdash; Large movements &rarr; Wind</b>
         <br />
         <br />
-        <b>Action:</b> the phone is spun while lying on a flat surface.<br />
-        <b>Sound:</b> engine.<br />
+        <b>Action:</b> the phone is held and used to detect all very large movements, but not small ones.<br />
+        <b>Sound:</b> wind.<br />
         <br />
-        <b>Scenario:</b> a spinning top or crank that drives a motor.<br />
-        <b>Mapping:</b> a motor is something that turns, so the phone's rotation speed
-        controls the engine's revs. The engine starts only when the phone lies flat
-        and spins fast enough. Spinning faster makes the revs higher, and when the phone
-        slows down the engine winds down and stops. The 360&deg;&rarr;0&deg; jump of
-        the compass angle is unwrapped, and separate start/stop thresholds keep the
-        engine from flickering on and off.<br />
+        <b>Scenario:</b> swinging a stick, a fan or a flag through the air.<br />
+        <b>Mapping:</b> a big, fast sweep pushes air and makes a "whoosh", while small
+        movements don't move enough air to be heard. Movements below a threshold are
+        ignored (silence); above it, the strength of the movement controls the force
+        and volume of the gust. The gust builds up quickly with the gesture and fades
+        out slowly after it, like air that keeps moving for a moment.<br />
         <br />
-        <i>How to use:</i> press "Turn On DSP", lay the phone on a table and spin it.
+        <i>How to use:</i> press "Turn On DSP", hold the phone and sweep your arm
+        through the air. Small movements stay silent.
       </p>
     </div>
 
